@@ -19,6 +19,8 @@ import java.util.LinkedList;
 
 public class PokedexMain extends AppCompatActivity {
 
+    // editing from old Pokedex to make less manual input
+
     EditText nationalNumberInput;
     EditText nameInput;
     EditText speciesInput;
