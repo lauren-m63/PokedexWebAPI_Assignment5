@@ -17,4 +17,7 @@
     <string name="pokemon_app">Pokemon App</string>
     <string name="view_data">View Data</string>
     <string name="to_delete_press_and_hold_on_which_you_want_to_delete">To delete press and hold on which you want to delete</string>
+    <string name="pokemon_image" />
+    <string name="back" />
+    <string name="display_pokemon">display pokemon</string>
 </resources>

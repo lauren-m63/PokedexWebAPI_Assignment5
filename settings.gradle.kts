@@ -9,6 +9,8 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        jcenter()
+        google()
     }
 }
 dependencyResolutionManagement {
@@ -16,6 +18,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // maven center is replacing jcenter? but it still works if crossed out so im doing j
+        maven("https://jitpack.io")
+       jcenter()
     }
 }
 

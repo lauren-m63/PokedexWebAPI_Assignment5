@@ -39,4 +39,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("com.amitshekhar.android:android-networking:1.0.2")
+    implementation("org.json:json:20230227") // for JSONObject support
 }

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -13,9 +12,15 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class PokedexMain extends AppCompatActivity {
+// import com.androidnetworking.AndroidNetworking;
+// import com.androidnetworking.common.Priority;
+// import com.androidnetworking.error.ANError;
+// import com.androidnetworking.interfaces.JSONObjectRequestListener;
 
-    // editing from old Pokedex to make less manual input
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class PokedexMain extends AppCompatActivity {
 
     EditText nationalNumberInput;
     EditText nameInput;
@@ -23,9 +28,11 @@ public class PokedexMain extends AppCompatActivity {
     Button submitButton;
     Button resetButton;
     Button dataButton;
+    Button pokemonDisplayButton;
+
     Pokedex pokedex;
 
-    // checks if all fields are filled
+    // Checks if all the fields are filled
     boolean allFieldsFilled(EditText... fields) {
         for (EditText field : fields) {
             if (field.getText().toString().trim().isEmpty()) {
@@ -39,87 +46,119 @@ public class PokedexMain extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.table); // Make sure res/layout/table.xml exists
+        setContentView(R.layout.table);
+
+        // Initialize Networking library (commented out, original version)
+        // AndroidNetworking.initialize(getApplicationContext());
+
         pokedex = new Pokedex(this);
 
-        // initialize input fields and buttons
         nationalNumberInput = findViewById(R.id.nationalNumberInput);
         nameInput = findViewById(R.id.nameInput);
         submitButton = findViewById(R.id.submitButton);
         resetButton = findViewById(R.id.resetButton);
         dataButton = findViewById(R.id.numberButton);
+        pokemonDisplayButton = findViewById(R.id.pokemonDisplayButton);
 
-        // handle submit button click
-        submitButton.setOnClickListener(v -> {
-
-            // checking if fields are empty
-            if (!allFieldsFilled(nationalNumberInput, nameInput)) {
-                Toast.makeText(this, "Please fill out both fields.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            int number = Integer.parseInt(nationalNumberInput.getText().toString());
-            String name = nameInput.getText().toString();
-
-            // validate inputs
-            StringBuilder fixIt = new StringBuilder();
-            if (!pokedex.setNumber(number)) fixIt.append("National Number, ");
-            if (!pokedex.setName(name)) fixIt.append("Name, ");
-
-            // show errors if any
-            if (fixIt.length() > 0) {
-                fixIt.setLength(fixIt.length() - 2); // remove last comma and space
-                Toast.makeText(this, "The following fields are not within bounds: " + fixIt, Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            // check duplicates in database
-            Cursor cursor = getContentResolver().query(
-                    PokedexContentProvider.CONTENT_URI,
-                    null,
-                    PokedexContentProvider.COL_NATIONALNUMBER + "=?",
-                    new String[]{String.valueOf(number)},
-                    null
-            );
-            if (cursor != null && cursor.getCount() > 0) {
-                Toast.makeText(this, "A Pokémon with this National Number already exists.", Toast.LENGTH_LONG).show();
-                cursor.close();
-                return; // stop insert
-            }
-            if (cursor != null) cursor.close();
-
-            // insert new Pokémon into database
-            ContentValues values = new ContentValues();
-            values.put(PokedexContentProvider.COL_NATIONALNUMBER, number);
-            values.put(PokedexContentProvider.COL_NAME, name);
-            getContentResolver().insert(PokedexContentProvider.CONTENT_URI, values);
-
-            // log all entries in database
-            Cursor c = getContentResolver().query(PokedexContentProvider.CONTENT_URI, null, null, null, null);
-            if (c != null && c.moveToFirst()) {
-                do {
-                    String message = "";
-                    for (int i = 0; i < c.getColumnCount(); i++) {
-                        message += c.getString(i) + " ";
-                    }
-                    Log.i("LAUREN", message.trim());
-                } while (c.moveToNext());
-                c.close();
-            }
-
-            Toast.makeText(this, "DONE", Toast.LENGTH_LONG).show();
-        });
-
-        // handle reset button click
+        submitButton.setOnClickListener(v -> handleSubmit());
         resetButton.setOnClickListener(v -> {
             nationalNumberInput.setText("896");
             nameInput.setText("Glastrier");
         });
-
-        // handle data button click to view database
         dataButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, DatabaseView.class);
             startActivity(intent);
         });
+
+        // Fetch Pokémon from API when clicking display button
+        pokemonDisplayButton.setOnClickListener(v -> {
+            String nameOrId = nameInput.getText().toString().trim();
+            if (!nameOrId.isEmpty()) {
+                fetchPokemonFromAPI(nameOrId);
+            } else {
+                Toast.makeText(this, "Please enter a Pokémon name or number", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void handleSubmit() {
+        if (!allFieldsFilled(nationalNumberInput, nameInput)) {
+            Toast.makeText(this, "Please fill out both fields.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int number = Integer.parseInt(nationalNumberInput.getText().toString());
+        String name = nameInput.getText().toString();
+
+        StringBuilder fixIt = new StringBuilder();
+        if (!pokedex.setNumber(number)) fixIt.append("National Number, ");
+        if (!pokedex.setName(name)) fixIt.append("Name, ");
+
+        if (fixIt.length() > 0) {
+            fixIt.setLength(fixIt.length() - 2);
+            Toast.makeText(this, "The following fields are not within bounds: " + fixIt, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Cursor cursor = getContentResolver().query(
+                PokedexContentProvider.CONTENT_URI,
+                null,
+                PokedexContentProvider.COL_NATIONALNUMBER + "=?",
+                new String[]{String.valueOf(number)},
+                null
+        );
+        if (cursor != null && cursor.getCount() > 0) {
+            Toast.makeText(this, "A Pokémon with this National Number already exists.", Toast.LENGTH_LONG).show();
+            cursor.close();
+            return;
+        }
+        if (cursor != null) cursor.close();
+
+        ContentValues values = new ContentValues();
+        values.put(PokedexContentProvider.COL_NATIONALNUMBER, number);
+        values.put(PokedexContentProvider.COL_NAME, name);
+        getContentResolver().insert(PokedexContentProvider.CONTENT_URI, values);
+
+        Toast.makeText(this, "DONE", Toast.LENGTH_LONG).show();
+    }
+
+    private void fetchPokemonFromAPI(String nameOrId) {
+        // Original version: networking removed
+        // AndroidNetworking.get("https://pokeapi.co/api/v2/pokemon/{nameOrId}")
+        //         .addPathParameter("nameOrId", nameOrId.toLowerCase())
+        //         .setPriority(Priority.LOW)
+        //         .build()
+        //         .getAsJSONObject(new JSONObjectRequestListener() {
+        //             @Override
+        //             public void onResponse(JSONObject response) {
+        //                 try {
+        //                     String name = response.getString("name");
+        //                     int id = response.getInt("id");
+        //                     int height = response.getInt("height");
+        //                     int weight = response.getInt("weight");
+        //
+        //                     openPokemonDisplayActivity(name, id, height, weight);
+        //
+        //                 } catch (JSONException e) {
+        //                     e.printStackTrace();
+        //                     Toast.makeText(PokedexMain.this, "Error parsing Pokémon data", Toast.LENGTH_SHORT).show();
+        //                 }
+        //             }
+        //
+        //             @Override
+        //             public void onError(ANError anError) {
+        //                 Toast.makeText(PokedexMain.this, "Error fetching Pokémon", Toast.LENGTH_SHORT).show();
+        //                 Log.e("POKEAPI", anError.getMessage());
+        //             }
+        //         });
+    }
+
+    private void openPokemonDisplayActivity(String name, int id, int height, int weight) {
+        Intent intent = new Intent(this, PokemonDisplayActivity.class);
+        intent.putExtra("name", name);
+        intent.putExtra("id", id);
+        intent.putExtra("height", height);
+        intent.putExtra("weight", weight);
+        startActivity(intent);
     }
 }
