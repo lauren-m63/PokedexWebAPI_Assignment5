@@ -1,59 +1,42 @@
 package com.example.pokedex;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class PokemonDisplayActivity extends AppCompatActivity {
+import com.bumptech.glide.Glide;
+import androidx.activity.EdgeToEdge;
 
-    // Views from the XML
-    private ImageView pokemonSprite;
-    private TextView pokemonName;
-    private TextView pokemonNumber;
-    private TextView pokemonTypes;
-    private TextView pokemonHeightWeight;
-    private TextView pokemonStats;
-    private Button backButton;
+public class PokemonDisplayActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.pokemon_display); // your XML page
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.pokemon_display);
 
-        // Bind the views
-        pokemonSprite = findViewById(R.id.pokemonSprite);
-        pokemonName = findViewById(R.id.pokemonName);
-        pokemonNumber = findViewById(R.id.pokemonNumber);
-        pokemonTypes = findViewById(R.id.pokemonTypes);
-        pokemonHeightWeight = findViewById(R.id.pokemonHeightWeight);
-        pokemonStats = findViewById(R.id.pokemonStats);
-        backButton = findViewById(R.id.backButton);
+        ImageView sprite = findViewById(R.id.pokemonSprite);
+        TextView name = findViewById(R.id.pokemonName);
+        TextView number = findViewById(R.id.pokemonNumber);
+        TextView types = findViewById(R.id.pokemonTypes);
+        TextView heightWeight = findViewById(R.id.pokemonHeightWeight);
+        TextView stats = findViewById(R.id.pokemonStats);
+        Button backButton = findViewById(R.id.backButton);
 
-        // Back button to finish activity and return
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+        String imageUrl = getIntent().getStringExtra("imageUrl");
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(this).load(imageUrl).into(sprite);
+        }
 
-        // Example: Get Pokémon data from Intent (sent from previous activity)
-        int nationalNumber = getIntent().getIntExtra("nationalNumber", 0);
-        String name = getIntent().getStringExtra("name");
-        String types = getIntent().getStringExtra("types"); // comma-separated
-        String heightWeight = getIntent().getStringExtra("heightWeight"); // e.g., "2.0 m / 60 kg"
-        String stats = getIntent().getStringExtra("stats"); // e.g., "HP: 45, Attack: 49, Defense: 49"
+        name.setText(getIntent().getStringExtra("name"));
+        number.setText("National Number: " + getIntent().getIntExtra("nationalNumber", 0));
+        types.setText("Type(s): " + getIntent().getStringExtra("types"));
+        heightWeight.setText("Height / Weight: " + getIntent().getStringExtra("heightWeight"));
+        stats.setText("Stats: " + getIntent().getStringExtra("stats"));
 
-        // Set data to views
-        pokemonName.setText(name != null ? name : "Unknown");
-        pokemonNumber.setText("National Number: " + nationalNumber);
-        pokemonTypes.setText("Type(s): " + (types != null ? types : "Unknown"));
-        pokemonHeightWeight.setText("Height / Weight: " + (heightWeight != null ? heightWeight : "Unknown"));
-        pokemonStats.setText("Stats: " + (stats != null ? stats : "Unknown"));
-
+        backButton.setOnClickListener(v -> finish());
     }
 }

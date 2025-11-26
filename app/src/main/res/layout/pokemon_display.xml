@@ -1,80 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Layout for Pokémon Detail Page -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="match_parent" android:layout_height="match_parent"
     android:padding="16dp">
+    <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
 
-    <!-- Using LinearLayout vertically to stack details -->
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        <ImageView android:id="@+id/pokemonSprite"
+            android:layout_width="150dp" android:layout_height="150dp"
+            android:layout_gravity="center" android:contentDescription="@string/pokemon_image" />
 
-        <!-- Pokémon Sprite / Image -->
-        <ImageView
-            android:id="@+id/pokemonSprite"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_gravity="center"
-            android:contentDescription="@string/pokemon_image"
-            android:padding="8dp" />
+        <TextView android:id="@+id/pokemonName" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="24sp" android:textAlignment="center" />
 
-        <!-- Pokémon Name -->
-        <TextView
-            android:id="@+id/pokemonName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Name"
-            android:textSize="24sp"
-            android:textAlignment="center"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
+        <TextView android:id="@+id/pokemonNumber" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="18sp" />
 
-        <!-- National Number -->
-        <TextView
-            android:id="@+id/pokemonNumber"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="National Number: "
-            android:textSize="18sp"
-            android:paddingBottom="4dp" />
+        <TextView android:id="@+id/pokemonTypes" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="18sp" />
 
-        <!-- Pokémon Types -->
-        <TextView
-            android:id="@+id/pokemonTypes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Type(s): "
-            android:textSize="18sp"
-            android:paddingBottom="4dp" />
+        <TextView android:id="@+id/pokemonHeightWeight" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="18sp" />
 
-        <!-- Pokémon Height and Weight -->
-        <TextView
-            android:id="@+id/pokemonHeightWeight"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Height / Weight: "
-            android:textSize="18sp"
-            android:paddingBottom="4dp" />
+        <TextView android:id="@+id/pokemonStats" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="18sp" />
 
-        <!-- Pokémon Base Stats -->
-        <TextView
-            android:id="@+id/pokemonStats"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Stats: "
-            android:textSize="18sp"
-            android:paddingBottom="4dp" />
-
-        <!-- Optional: Back Button to go to input page -->
-        <Button
-            android:id="@+id/backButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/back"
-            android:layout_gravity="center"
-            android:paddingTop="16dp" />
-
+        <Button android:id="@+id/backButton" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="@string/back" android:layout_gravity="center"/>
     </LinearLayout>
 </ScrollView>

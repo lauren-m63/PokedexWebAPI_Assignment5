@@ -32,7 +32,6 @@ public class PokedexMain extends AppCompatActivity {
 
     Pokedex pokedex;
 
-    // At least one field required
     boolean atLeastOneFilled(EditText... fields) {
         for (EditText field : fields) {
             if (!field.getText().toString().trim().isEmpty()) {
@@ -42,7 +41,6 @@ public class PokedexMain extends AppCompatActivity {
         return false;
     }
 
-    // Check if a string contains ONLY digits
     boolean isNumeric(String s) {
         if (s.isEmpty()) return false;
         for (int i = 0; i < s.length(); i++) {
@@ -68,67 +66,46 @@ public class PokedexMain extends AppCompatActivity {
         pokemonDisplayButton = findViewById(R.id.pokemonDisplayButton);
 
         submitButton.setOnClickListener(v -> handleSubmit());
-
         resetButton.setOnClickListener(v -> {
             nationalNumberInput.setText("896");
             nameInput.setText("Glastrier");
         });
-
-        dataButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, DatabaseView.class);
-            startActivity(intent);
-        });
-
+        dataButton.setOnClickListener(v -> startActivity(new Intent(this, DatabaseView.class)));
         pokemonDisplayButton.setOnClickListener(v -> {
             String nameOrId = nameInput.getText().toString().trim();
-            if (!nameOrId.isEmpty()) {
-                fetchPokemonFromAPI(nameOrId);
-            } else {
-                Toast.makeText(this, "Please enter a Pokémon name or number", Toast.LENGTH_SHORT).show();
-            }
+            if (!nameOrId.isEmpty()) fetchPokemonFromAPI(nameOrId);
+            else Toast.makeText(this, "Please enter a Pokémon name or number", Toast.LENGTH_SHORT).show();
         });
     }
 
     private void handleSubmit() {
-
-        // Require at least one field
         if (!atLeastOneFilled(nationalNumberInput, nameInput)) {
             Toast.makeText(this, "Please enter a Pokémon name OR number.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Handle number safely
         String numText = nationalNumberInput.getText().toString().trim();
         Integer number = null;
-
         if (!numText.isEmpty()) {
             if (!isNumeric(numText)) {
                 Toast.makeText(this, "National Number must contain digits only.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            number = Integer.parseInt(numText); // safe now
+            number = Integer.parseInt(numText);
         }
 
-        // Handle name safely
         String name = nameInput.getText().toString().trim();
         if (name.isEmpty()) name = null;
 
-        // Validation using your Pokedex class
         StringBuilder fixIt = new StringBuilder();
-
-        if (number != null && !pokedex.setNumber(number))
-            fixIt.append("National Number, ");
-
-        if (name != null && !pokedex.setName(name))
-            fixIt.append("Name, ");
-
+        if (number != null && !pokedex.setNumber(number)) fixIt.append("National Number, ");
+        if (name != null && !pokedex.setName(name)) fixIt.append("Name, ");
         if (fixIt.length() > 0) {
             fixIt.setLength(fixIt.length() - 2);
             Toast.makeText(this, "The following fields are not within bounds: " + fixIt, Toast.LENGTH_LONG).show();
             return;
         }
 
-        // ID duplicate check
         if (number != null) {
             Cursor cursor = getContentResolver().query(
                     PokedexContentProvider.CONTENT_URI,
@@ -145,13 +122,11 @@ public class PokedexMain extends AppCompatActivity {
             if (cursor != null) cursor.close();
         }
 
-        // Insert
         ContentValues values = new ContentValues();
         if (number != null) values.put(PokedexContentProvider.COL_NATIONALNUMBER, number);
         if (name != null) values.put(PokedexContentProvider.COL_NAME, name);
 
         getContentResolver().insert(PokedexContentProvider.CONTENT_URI, values);
-
         Toast.makeText(this, "DONE", Toast.LENGTH_LONG).show();
     }
 
@@ -168,8 +143,31 @@ public class PokedexMain extends AppCompatActivity {
                             int id = response.getInt("id");
                             int height = response.getInt("height");
                             int weight = response.getInt("weight");
+                            String imageUrl = response.getJSONObject("sprites").getString("front_default");
 
-                            openPokemonDisplayActivity(name, id, height, weight);
+                            StringBuilder typesBuilder = new StringBuilder();
+                            for (int i = 0; i < response.getJSONArray("types").length(); i++) {
+                                typesBuilder.append(
+                                        response.getJSONArray("types")
+                                                .getJSONObject(i)
+                                                .getJSONObject("type")
+                                                .getString("name")
+                                );
+                                if (i < response.getJSONArray("types").length() - 1) typesBuilder.append(", ");
+                            }
+
+                            StringBuilder statsBuilder = new StringBuilder();
+                            for (int i = 0; i < response.getJSONArray("stats").length(); i++) {
+                                JSONObject statObj = response.getJSONArray("stats").getJSONObject(i);
+                                String statName = statObj.getJSONObject("stat").getString("name");
+                                int statValue = statObj.getInt("base_stat");
+                                statsBuilder.append(statName).append(": ").append(statValue);
+                                if (i < response.getJSONArray("stats").length() - 1) statsBuilder.append(", ");
+                            }
+
+                            String heightWeight = height + " dm / " + weight + " hg";
+
+                            openPokemonDisplayActivity(name, id, typesBuilder.toString(), heightWeight, statsBuilder.toString(), imageUrl);
 
                         } catch (JSONException e) {
                             Toast.makeText(PokedexMain.this, "Error parsing Pokémon data", Toast.LENGTH_SHORT).show();
@@ -184,12 +182,14 @@ public class PokedexMain extends AppCompatActivity {
                 });
     }
 
-    private void openPokemonDisplayActivity(String name, int id, int height, int weight) {
+    private void openPokemonDisplayActivity(String name, int id, String types, String heightWeight, String stats, String imageUrl) {
         Intent intent = new Intent(this, PokemonDisplayActivity.class);
         intent.putExtra("name", name);
-        intent.putExtra("id", id);
-        intent.putExtra("height", height);
-        intent.putExtra("weight", weight);
+        intent.putExtra("nationalNumber", id);
+        intent.putExtra("types", types);
+        intent.putExtra("heightWeight", heightWeight);
+        intent.putExtra("stats", stats);
+        intent.putExtra("imageUrl", imageUrl);
         startActivity(intent);
     }
 }
