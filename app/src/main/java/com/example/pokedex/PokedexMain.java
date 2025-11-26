@@ -12,10 +12,10 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
-// import com.androidnetworking.AndroidNetworking;
-// import com.androidnetworking.common.Priority;
-// import com.androidnetworking.error.ANError;
-// import com.androidnetworking.interfaces.JSONObjectRequestListener;
+import com.androidnetworking.AndroidNetworking;
+import com.androidnetworking.common.Priority;
+import com.androidnetworking.error.ANError;
+import com.androidnetworking.interfaces.JSONObjectRequestListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,12 +32,21 @@ public class PokedexMain extends AppCompatActivity {
 
     Pokedex pokedex;
 
-    // Checks if all the fields are filled
-    boolean allFieldsFilled(EditText... fields) {
+    // At least one field required
+    boolean atLeastOneFilled(EditText... fields) {
         for (EditText field : fields) {
-            if (field.getText().toString().trim().isEmpty()) {
-                return false;
+            if (!field.getText().toString().trim().isEmpty()) {
+                return true;
             }
+        }
+        return false;
+    }
+
+    // Check if a string contains ONLY digits
+    boolean isNumeric(String s) {
+        if (s.isEmpty()) return false;
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) return false;
         }
         return true;
     }
@@ -48,9 +57,7 @@ public class PokedexMain extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.table);
 
-        // Initialize Networking library (commented out, original version)
-        // AndroidNetworking.initialize(getApplicationContext());
-
+        AndroidNetworking.initialize(getApplicationContext());
         pokedex = new Pokedex(this);
 
         nationalNumberInput = findViewById(R.id.nationalNumberInput);
@@ -61,16 +68,17 @@ public class PokedexMain extends AppCompatActivity {
         pokemonDisplayButton = findViewById(R.id.pokemonDisplayButton);
 
         submitButton.setOnClickListener(v -> handleSubmit());
+
         resetButton.setOnClickListener(v -> {
             nationalNumberInput.setText("896");
             nameInput.setText("Glastrier");
         });
+
         dataButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, DatabaseView.class);
             startActivity(intent);
         });
 
-        // Fetch Pokémon from API when clicking display button
         pokemonDisplayButton.setOnClickListener(v -> {
             String nameOrId = nameInput.getText().toString().trim();
             if (!nameOrId.isEmpty()) {
@@ -82,17 +90,37 @@ public class PokedexMain extends AppCompatActivity {
     }
 
     private void handleSubmit() {
-        if (!allFieldsFilled(nationalNumberInput, nameInput)) {
-            Toast.makeText(this, "Please fill out both fields.", Toast.LENGTH_SHORT).show();
+
+        // Require at least one field
+        if (!atLeastOneFilled(nationalNumberInput, nameInput)) {
+            Toast.makeText(this, "Please enter a Pokémon name OR number.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        int number = Integer.parseInt(nationalNumberInput.getText().toString());
-        String name = nameInput.getText().toString();
+        // Handle number safely
+        String numText = nationalNumberInput.getText().toString().trim();
+        Integer number = null;
 
+        if (!numText.isEmpty()) {
+            if (!isNumeric(numText)) {
+                Toast.makeText(this, "National Number must contain digits only.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            number = Integer.parseInt(numText); // safe now
+        }
+
+        // Handle name safely
+        String name = nameInput.getText().toString().trim();
+        if (name.isEmpty()) name = null;
+
+        // Validation using your Pokedex class
         StringBuilder fixIt = new StringBuilder();
-        if (!pokedex.setNumber(number)) fixIt.append("National Number, ");
-        if (!pokedex.setName(name)) fixIt.append("Name, ");
+
+        if (number != null && !pokedex.setNumber(number))
+            fixIt.append("National Number, ");
+
+        if (name != null && !pokedex.setName(name))
+            fixIt.append("Name, ");
 
         if (fixIt.length() > 0) {
             fixIt.setLength(fixIt.length() - 2);
@@ -100,57 +128,60 @@ public class PokedexMain extends AppCompatActivity {
             return;
         }
 
-        Cursor cursor = getContentResolver().query(
-                PokedexContentProvider.CONTENT_URI,
-                null,
-                PokedexContentProvider.COL_NATIONALNUMBER + "=?",
-                new String[]{String.valueOf(number)},
-                null
-        );
-        if (cursor != null && cursor.getCount() > 0) {
-            Toast.makeText(this, "A Pokémon with this National Number already exists.", Toast.LENGTH_LONG).show();
-            cursor.close();
-            return;
+        // ID duplicate check
+        if (number != null) {
+            Cursor cursor = getContentResolver().query(
+                    PokedexContentProvider.CONTENT_URI,
+                    null,
+                    PokedexContentProvider.COL_NATIONALNUMBER + "=?",
+                    new String[]{String.valueOf(number)},
+                    null
+            );
+            if (cursor != null && cursor.getCount() > 0) {
+                Toast.makeText(this, "A Pokémon with this National Number already exists.", Toast.LENGTH_LONG).show();
+                cursor.close();
+                return;
+            }
+            if (cursor != null) cursor.close();
         }
-        if (cursor != null) cursor.close();
 
+        // Insert
         ContentValues values = new ContentValues();
-        values.put(PokedexContentProvider.COL_NATIONALNUMBER, number);
-        values.put(PokedexContentProvider.COL_NAME, name);
+        if (number != null) values.put(PokedexContentProvider.COL_NATIONALNUMBER, number);
+        if (name != null) values.put(PokedexContentProvider.COL_NAME, name);
+
         getContentResolver().insert(PokedexContentProvider.CONTENT_URI, values);
 
         Toast.makeText(this, "DONE", Toast.LENGTH_LONG).show();
     }
 
     private void fetchPokemonFromAPI(String nameOrId) {
-        // Original version: networking removed
-        // AndroidNetworking.get("https://pokeapi.co/api/v2/pokemon/{nameOrId}")
-        //         .addPathParameter("nameOrId", nameOrId.toLowerCase())
-        //         .setPriority(Priority.LOW)
-        //         .build()
-        //         .getAsJSONObject(new JSONObjectRequestListener() {
-        //             @Override
-        //             public void onResponse(JSONObject response) {
-        //                 try {
-        //                     String name = response.getString("name");
-        //                     int id = response.getInt("id");
-        //                     int height = response.getInt("height");
-        //                     int weight = response.getInt("weight");
-        //
-        //                     openPokemonDisplayActivity(name, id, height, weight);
-        //
-        //                 } catch (JSONException e) {
-        //                     e.printStackTrace();
-        //                     Toast.makeText(PokedexMain.this, "Error parsing Pokémon data", Toast.LENGTH_SHORT).show();
-        //                 }
-        //             }
-        //
-        //             @Override
-        //             public void onError(ANError anError) {
-        //                 Toast.makeText(PokedexMain.this, "Error fetching Pokémon", Toast.LENGTH_SHORT).show();
-        //                 Log.e("POKEAPI", anError.getMessage());
-        //             }
-        //         });
+        AndroidNetworking.get("https://pokeapi.co/api/v2/pokemon/{nameOrId}")
+                .addPathParameter("nameOrId", nameOrId.toLowerCase())
+                .setPriority(Priority.LOW)
+                .build()
+                .getAsJSONObject(new JSONObjectRequestListener() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            String name = response.getString("name");
+                            int id = response.getInt("id");
+                            int height = response.getInt("height");
+                            int weight = response.getInt("weight");
+
+                            openPokemonDisplayActivity(name, id, height, weight);
+
+                        } catch (JSONException e) {
+                            Toast.makeText(PokedexMain.this, "Error parsing Pokémon data", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(ANError anError) {
+                        Toast.makeText(PokedexMain.this, "Error fetching Pokémon", Toast.LENGTH_SHORT).show();
+                        Log.e("POKEAPI", anError.getMessage());
+                    }
+                });
     }
 
     private void openPokemonDisplayActivity(String name, int id, int height, int weight) {

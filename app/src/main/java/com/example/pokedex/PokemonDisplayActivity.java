@@ -55,7 +55,5 @@ public class PokemonDisplayActivity extends AppCompatActivity {
         pokemonHeightWeight.setText("Height / Weight: " + (heightWeight != null ? heightWeight : "Unknown"));
         pokemonStats.setText("Stats: " + (stats != null ? stats : "Unknown"));
 
-
-        // Glide.with(this).load(spriteUrl).into(pokemonSprite);
     }
 }

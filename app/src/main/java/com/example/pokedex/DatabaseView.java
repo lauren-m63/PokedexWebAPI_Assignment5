@@ -30,8 +30,7 @@ public class DatabaseView extends AppCompatActivity {
                         "_ID", // required for SimpleCursorAdapter ????
                         PokedexContentProvider.COL_NATIONALNUMBER,
                         PokedexContentProvider.COL_NAME,
-                        PokedexContentProvider.COL_SPECIES,
-                        PokedexContentProvider.COL_HP
+
                 },
                 null,
                 null,
@@ -42,8 +41,7 @@ public class DatabaseView extends AppCompatActivity {
         String[] from = {
                 PokedexContentProvider.COL_NATIONALNUMBER,
                 PokedexContentProvider.COL_NAME,
-                PokedexContentProvider.COL_SPECIES,
-                PokedexContentProvider.COL_HP
+
         };
 
         int[] to = {
@@ -83,8 +81,7 @@ public class DatabaseView extends AppCompatActivity {
                             "_ID",
                             PokedexContentProvider.COL_NATIONALNUMBER,
                             PokedexContentProvider.COL_NAME,
-                            PokedexContentProvider.COL_SPECIES,
-                            PokedexContentProvider.COL_HP
+
                     },
                     null, null, null
             );

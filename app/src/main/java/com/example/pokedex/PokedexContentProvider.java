@@ -13,29 +13,14 @@ public class PokedexContentProvider extends ContentProvider {
     public static final String TABLE_NAME= "PokedexTable";
     public static final String COL_NATIONALNUMBER= "NationalNumber";
     public static final String COL_NAME= "Name";
-    public static final String COL_SPECIES= "Species";
-    public static final String COL_HEIGHT= "Height";
-    public static final String COL_WEIGHT= "Weight";
-    public static final String COL_LEVEL= "Level";
-    public static final String COL_HP= "HP";
-    public static final String COL_ATTACK= "Attack";
-    public static final String COL_DEFENSE= "Defense";
-    public static final String COL_GENDER= "Gender";
+
     public static final String DB_NAME= "PokedexDB";
     MainDatabaseHelper mHelper;
 
     public final static String SQL_CREATE = "CREATE TABLE " + TABLE_NAME + " (" +
                     "_ID INTEGER PRIMARY KEY, " +
                     COL_NATIONALNUMBER + " INTEGER, " +
-                    COL_NAME + " TEXT, " +
-                    COL_SPECIES + " TEXT, " +
-                    COL_HEIGHT + " REAL, " +
-                    COL_WEIGHT + " REAL, " +
-                    COL_GENDER + " TEXT, " +
-                    COL_LEVEL + " INTEGER, " +
-                    COL_HP + " INTEGER, " +
-                    COL_ATTACK + " INTEGER, " +
-                    COL_DEFENSE + " INTEGER)";
+                    COL_NAME + " TEXT) ";
 
 
     public static final Uri CONTENT_URI = Uri.parse("content://com.example.pokedex.provider");
@@ -79,14 +64,6 @@ public class PokedexContentProvider extends ContentProvider {
     public Uri insert(Uri uri, ContentValues values) {
         int nationalNumber = values.getAsInteger(COL_NATIONALNUMBER);
         String name = values.getAsString(COL_NAME);
-        double height = values.getAsDouble(COL_HEIGHT);
-        double weight = values.getAsDouble(COL_WEIGHT);
-        String species = values.getAsString(COL_SPECIES);
-        String gender = values.getAsString(COL_GENDER);
-        int level = values.getAsInteger(COL_LEVEL);
-        int hp = values.getAsInteger(COL_HP);
-        int attack = values.getAsInteger(COL_ATTACK);
-        int defense = values.getAsInteger(COL_DEFENSE);
 
         long id = mHelper.getWritableDatabase().insert(TABLE_NAME, null, values);
 
@@ -110,8 +87,6 @@ public class PokedexContentProvider extends ContentProvider {
                     "_ID as _id",  // alias _ID to _id for adapter
                     COL_NATIONALNUMBER,
                     COL_NAME,
-                    COL_SPECIES,
-                    COL_HP
             };
         } else {
             // Alias _ID if included
